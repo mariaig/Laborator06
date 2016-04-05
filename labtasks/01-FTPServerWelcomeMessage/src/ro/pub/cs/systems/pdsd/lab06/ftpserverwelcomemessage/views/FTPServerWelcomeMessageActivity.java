@@ -1,7 +1,12 @@
 package ro.pub.cs.systems.pdsd.lab06.ftpserverwelcomemessage.views;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.Socket;
+
 import ro.pub.cs.systems.pdsd.lab06.ftpserverwelcomemessage.R;
 import ro.pub.cs.systems.pdsd.lab06.ftpserverwelcomemessage.general.Constants;
+import ro.pub.cs.systems.pdsd.lab06.ftpserverwelcomemessage.general.Utilities;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
@@ -32,7 +37,51 @@ public class FTPServerWelcomeMessageActivity extends Activity {
 				// - the value does not start with Constants.FTP_MULTILINE_START_CODE2
 				// append the line to the welcomeMessageTextView text view content (on the UI thread!!!)
 				// close the socket
-
+				
+//				1. deschiderea unui socket care primește ca parametrii:
+//					* adresa Internet a serverului FTP (precizată anterior de utilizator, preluată din câmpul text FTPServerAddressEditText)
+//					* portul 21 (preluat din Constants.FTP_PORT).
+				
+				String address = FTPServerAddressEditText.getText().toString();
+				Log.v(Constants.TAG, "Address: " + address);
+				
+				Socket socket = new Socket(address, Constants.FTP_PORT);
+				Log.v(Constants.TAG, "Connected to " + socket.getInetAddress() + "(port: " + socket.getLocalPort() + ")");
+				
+//			2. obținerea fluxului de intrare atașat socket-ului, printr-un apel al metodei Utilities.getBufferedReader();
+				BufferedReader bufferedReader = Utilities.getReader(socket);
+				
+				
+//			3. citirea unei linii de pe fluxul de intrare:
+				String line = bufferedReader.readLine();
+				
+//				dacă aceasta începe cu șirul de caractere 220- (preluat din Constants.FTP_MULTILINE_START_CODE), mesajul este analizat;
+				if(line != null && line.startsWith(Constants.FTP_MULTILINE_START_CODE)) {
+//					se citesc linii de pe fluxul de intrare atașat socket-ului cât timp valoarea:
+//						* nu este egală cu 220 (preluat din Constants.FTP_MULTILINE_END_CODE1);
+//						* nu începe cu 220 (preluat din Constants.FTP_MULTILINE_END_CODE2);
+					while((line=bufferedReader.readLine()) != null) {
+						if (!line.equals(Constants.FTP_MULTILINE_END_CODE1) &&
+								!line.startsWith(Constants.FTP_MULTILINE_END_CODE2)) {
+								Log.v(Constants.TAG, "Line read from ftp server: " + line);
+								final String finalLine = line;
+//								valoarea primită de la serverul FTP este inclusă în câmpul text welcomeMEssageTextView;
+								welcomeMessageTextView.post(new Runnable() {
+									@Override
+									public void run() {
+										welcomeMessageTextView.append(finalLine + " ");
+									}
+								});
+							} else {
+//								altfel, mesajul este ignorat.
+								break;
+							}
+					}
+				}
+//			5. închiderea socket-ului.
+				socket.close();
+				
+				
 			} catch (Exception exception) {
 				Log.e(Constants.TAG, "An exception has occurred: "+exception.getMessage());
 				if (Constants.DEBUG) {
