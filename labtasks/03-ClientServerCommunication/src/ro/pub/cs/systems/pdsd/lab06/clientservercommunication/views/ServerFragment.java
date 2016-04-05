@@ -1,11 +1,13 @@
 package ro.pub.cs.systems.pdsd.lab06.clientservercommunication.views;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 import ro.pub.cs.systems.pdsd.lab06.clientservercommunication.R;
 import ro.pub.cs.systems.pdsd.lab06.clientservercommunication.general.Constants;
+import ro.pub.cs.systems.pdsd.lab06.clientservercommunication.general.Utilities;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.text.Editable;
@@ -65,6 +67,9 @@ public class ServerFragment extends Fragment {
 				// TODO: exercise 6a
 				// - get the PrintWriter object in order to write on the socket (use Utilities.getWriter())
 				// - print a line containing the text in serverTextEditText edit text
+				
+				PrintWriter printWriter = Utilities.getWriter(socket);
+				printWriter.println(serverTextEditText.getText().toString());
 				
 				socket.close();
 
