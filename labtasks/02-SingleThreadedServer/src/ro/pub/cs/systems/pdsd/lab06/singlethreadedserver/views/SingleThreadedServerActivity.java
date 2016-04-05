@@ -87,12 +87,9 @@ public class SingleThreadedServerActivity extends Activity {
 			try {
 				serverSocket = new ServerSocket(Constants.SERVER_PORT);
 				while (isRunning) {
+					
 					Socket socket = serverSocket.accept();
-					Log.v(Constants.TAG, "Connection opened with "+socket.getInetAddress()+":"+socket.getLocalPort());
-					PrintWriter printWriter = Utilities.getWriter(socket);
-					printWriter.println(serverTextEditText.getText().toString());
-					socket.close();
-					Log.v(Constants.TAG, "Connection closed");
+					new CommunicationThread(socket).start();
 				}
 			} catch (IOException ioException) {
 				Log.e(Constants.TAG, "An exception has occurred: "+ioException.getMessage());
@@ -130,4 +127,41 @@ public class SingleThreadedServerActivity extends Activity {
 		}
 		return super.onOptionsItemSelected(item);
 	}
+	
+	@Override
+	public void onDestroy() {
+	  super.onDestroy();
+	  singleThreadedServer.stopServer();
+	}
+	
+	
+	private class CommunicationThread extends Thread {
+		  private Socket socket;
+		 
+		  public CommunicationThread(Socket socket) {
+		    this.socket = socket;
+		  }
+		 
+		  @Override
+		  public void run() {
+		    try {
+				Log.v(Constants.TAG, "Connection opened with "+socket.getInetAddress()+":"+socket.getLocalPort());
+				PrintWriter printWriter = Utilities.getWriter(socket);
+				printWriter.println(serverTextEditText.getText().toString());
+				Thread.sleep(3000);
+				socket.close();
+				Log.v(Constants.TAG, "Connection closed");
+		    } catch (IOException ioException) {
+		      Log.e(Constants.TAG, "An exception has occurred: "+ioException.getMessage());
+		      if (Constants.DEBUG) {
+		        ioException.printStackTrace();
+		      }
+		    } catch (InterruptedException e) {
+				Log.e(Constants.TAG, "An exception has occurred: " + e.getMessage());
+				e.printStackTrace();
+			}
+		  }
+		}
+	
+	
 }
